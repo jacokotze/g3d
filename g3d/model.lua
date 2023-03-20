@@ -223,4 +223,74 @@ function model:capsuleIntersection(...)
     return collisions.capsuleIntersection(self.verts, self, ...)
 end
 
+if(g3d.cpml) then
+    local cpml = g3d.cpml;
+    --[[
+        model:forward()
+        take model rotation and return vector.forward * rotation(as a quat)
+    ]]
+    function model:getDirection(dir)
+        local dir = dir or {1,0,0}
+        dir = cpml.vec3(dir[1], dir[2], dir[3]):normalize();
+        local rotation;
+        -- if(self.rotation[4]) then
+        --     rotation = cpml.quat(self.rotation[1],self.rotation[2],self.rotation[3],self.rotation[4])
+        -- else
+        --     rotation = model.EulerToQuaternion(self.rotation[1],self.rotation[2],self.rotation[3])
+        -- end
+        local rotation = self:getRotation();
+        return rotation * dir;
+    end
+
+    function model:getRotation()
+        if(self.rotation[4]) then
+            return cpml.quat(self.rotation[1],self.rotation[2],self.rotation[3],self.rotation[4])
+        else
+            return model.EulerToQuaternion(self.rotation[1],self.rotation[2],self.rotation[3])
+        end
+    end
+
+    function model:getTranslation()
+        return self.translation
+    end
+
+    function model.EulerToQuaternion(x,y,z) --roll (x), pitch (Y), yaw (z)
+        local cr = math.cos(x * 0.5);
+        local sr = math.sin(x * 0.5);
+        local cp = math.cos(y * 0.5);
+        local sp = math.sin(y * 0.5);
+        local cy = math.cos(z * 0.5);
+        local sy = math.sin(z * 0.5);
+
+        local q = {}
+        q.w = cr * cp * cy + sr * sp * sy;
+        q.x = sr * cp * cy - cr * sp * sy;
+        q.y = cr * sp * cy + sr * cp * sy;
+        q.z = cr * cp * sy - sr * sp * cy;
+        
+        return cpml.quat(q.x,q.y,q.z,q.w);
+    end
+
+    -- move and rotate the model, given a point and a direction and a pitch (vertical direction)
+    function model:lookInDirection(x,y,z, directionTowards,pitchTowards)
+        self.translation[1] = x or self.translation[1]
+        self.translation[2] = y or self.translation[2]
+        self.translation[3] = z or self.translation[3]
+
+        -- turn the cos of the pitch into a sign value, either 1, -1, or 0
+        local sign = math.cos(pitchTowards)
+        sign = (sign > 0 and 1) or (sign < 0 and -1) or 0
+
+        -- don't let cosPitch ever hit 0, because weird camera glitches will happen
+        local cosPitch = sign*math.max(math.abs(math.cos(pitchTowards)), 0.00001)
+
+        -- convert the direction and pitch into a target point
+        self.rotation[1] = self.translation[1]+math.cos(directionTowards)*cosPitch
+        self.rotation[2] = self.translation[2]+math.sin(directionTowards)*cosPitch
+        self.rotation[3] = self.translation[3]+math.sin(pitchTowards)
+
+        self:updateMatrix()
+    end
+end
+
 return newModel

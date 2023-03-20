@@ -45,6 +45,16 @@ g3d = {
     shaderpath = ... .. "/g3d.vert",
 }
 
+local root_path = string.sub(g3d.path,1,string.find(g3d.path,'g3d')-1);
+if (love.filesystem.isDirectory(root_path .. '/cpml')) then
+    g3d.cpml = require(root_path .. '/cpml');
+    print("----------------------------------------")
+    print("---Cirnos Perfect Math Library found.---")
+    print("----------------------------------------")
+else
+    g3d.cpml = false;
+end
+
 -- the shader is what does the heavy lifting, displaying 3D meshes on your 2D monitor
 g3d.shader = love.graphics.newShader(g3d.shaderpath)
 g3d.newModel = require(g3d.path .. ".model")
@@ -52,6 +62,7 @@ g3d.camera = require(g3d.path .. ".cam")
 g3d.collisions = require(g3d.path .. ".collisions")
 g3d.loadObj = require(g3d.path .. ".objloader")
 g3d.vectors = require(g3d.path .. ".vectors")
+
 
 g3d.camera.current():updateProjectionMatrix()
 g3d.camera.current():updateViewMatrix()

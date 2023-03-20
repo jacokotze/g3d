@@ -173,7 +173,7 @@ end
 -- use this in your love.mousemoved function, passing in the movements
 function camera:firstPersonLook(dx,dy)
     -- capture the mouse
-    -- love.mouse.setRelativeMode(true)
+    love.mouse.setRelativeMode(true)
 
     local sensitivity = 1/300
     self.direction = self.direction - dx*sensitivity
